@@ -5,7 +5,6 @@
 
 #include <linux/ip.h>
 #include <linux/tcp.h>
-//#include <linux/udp.h>
 #include <linux/string.h>
 #include <linux/byteorder/generic.h>
 
