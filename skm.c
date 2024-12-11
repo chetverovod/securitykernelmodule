@@ -5,7 +5,7 @@
 
 #include <linux/ip.h>
 #include <linux/tcp.h>
-#include <linux/udp.h>
+//#include <linux/udp.h>
 #include <linux/string.h>
 #include <linux/byteorder/generic.h>
 
@@ -113,7 +113,7 @@ unsigned int my_nf_hook(unsigned int hooknum,
 }
 
 
-static int __init km_init(void)
+static int __init skm_init(void)
 {
     pr_info(M_NAME " module is loaded.\n");
 
@@ -152,12 +152,12 @@ static int __init km_init(void)
 }
 
 
-static void __exit km_exit(void)
+static void __exit skm_exit(void)
 {
     /* Удаляем из цепочки hook функцию. */
     nf_unregister_net_hook(&init_net, &input_bundle);
     printk(KERN_INFO M_NAME " module deactivated.");
 }
 
-module_init(km_init);
-module_exit(km_exit);
+module_init(skm_init);
+module_exit(skm_exit);
