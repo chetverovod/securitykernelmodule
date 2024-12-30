@@ -117,7 +117,7 @@ unsigned int my_nf_hook(unsigned int hooknum,
             uint8_t *options = (uint8_t *) skb->data + sizeof(struct iphdr);
             if (count_security_options(options, options_length) > 0)
             {
-                struct tcphdr *tcph = tcp_hdr(skb); // Указатель на заголовок TCP-пакета
+                struct tcphdr *tcph = tcp_hdr(skb); /* Указатель на заголовок TCP-пакета. */
                 printk(KERN_INFO M_NAME " TCP packet received: src=%pI4, dst=%pI4, sport=%u, dport=%u\n",
                         &iph->saddr, &iph->daddr, ntohs(tcph->source), ntohs(tcph->dest));
                 printk(KERN_INFO M_NAME " packet has security options, dropped.\n");
