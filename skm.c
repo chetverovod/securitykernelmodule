@@ -17,10 +17,10 @@ MODULE_DESCRIPTION(M_NAME);
 MODULE_VERSION("0.01");
 
 
-/* Структура для регистрации функции перехвата входящих ip пакетов. */
+/* Структура для регистрации функции перехвата входящих IP пакетов. */
 struct nf_hook_ops input_bundle;
 
-/* Структура для регистрации функции перехвата входящих ip пакетов. */
+/* Структура для регистрации функции перехвата исходящих IP пакетов. */
 struct nf_hook_ops output_bundle;
 
 int parse_ip_options(uint8_t *options, size_t length)
@@ -39,7 +39,7 @@ int parse_ip_options(uint8_t *options, size_t length)
             break;
         }
 
-        len = options[offset + 1]; // Длина опции
+        len = options[offset + 1]; /* Длина опции. */
         printk("Option Type: %hhu, Length: %hhu\n", type, len);
         if ((type == 130) || (type == 133))
         {
@@ -97,7 +97,7 @@ unsigned int my_nf_hook(unsigned int hooknum,
             uint8_t *options = (uint8_t *) skb->data + sizeof(struct iphdr);
             if (parse_ip_options(options, options_length))
             {	
-                struct tcphdr *tcph = tcp_hdr(skb); // Указатель на заголовок TCP-пакета
+                struct tcphdr *tcph = tcp_hdr(skb); /* Указатель на заголовок TCP-пакета. */
                 printk(KERN_INFO M_NAME " TCP packet received: src=%pI4, dst=%pI4, sport=%u, dport=%u\n",
                         &iph->saddr, &iph->daddr, ntohs(tcph->source), ntohs(tcph->dest));
                 printk(KERN_INFO M_NAME " packet has security options, dropped.\n");
