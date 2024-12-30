@@ -5,8 +5,12 @@
 
 #include <linux/ip.h>
 #include <linux/tcp.h>
+#include <linux/udp.h>
 #include <linux/string.h>
 #include <linux/byteorder/generic.h>
+
+/* Type of Extended Security Option */
+#define IPOPT_EXT_SEC   (5 |IPOPT_CONTROL|IPOPT_COPY)
 
 
 #define M_NAME "Security filter"
@@ -17,38 +21,55 @@ MODULE_DESCRIPTION(M_NAME);
 MODULE_VERSION("0.01");
 
 
-/* Структура для регистрации функции перехвата входящих IP пакетов. */
+/* Структура для регистрации функции перехвата входящих IP-пакетов. */
 struct nf_hook_ops input_bundle;
 
-/* Структура для регистрации функции перехвата исходящих IP пакетов. */
+/* Структура для регистрации функции перехвата исходящих IP-пакетов. */
 struct nf_hook_ops output_bundle;
 
-int parse_ip_options(uint8_t *options, size_t length)
+
+int count_security_options(uint8_t *options, size_t length)
 {
     uint8_t type, len;
     size_t offset = 0;
-    int res = 0; 
+    int res = 0;
     size_t i;
     while (offset < length)
     {
         type = options[offset];
 
-        if (type == 0 || type == 1)
-        { 
-            /* End of Option List или No Operation */
+        if (type == IPOPT_END)
+        {
+            /* End of Option List*/
             break;
         }
 
-        len = options[offset + 1]; /* Длина опции. */
-        printk("Option Type: %hhu, Length: %hhu\n", type, len);
-        if ((type == 130) || (type == 133))
+        if  (type == IPOPT_NOP)
         {
-            printk("Security Option Type: %hhu, Length: %hhu\n", type, len);
-            res = 1;
+            /* No Operation */
+            printk("Option Type: NOP\n");
+            offset += 1;
+            continue;
+        }
 
+        printk("Option Type: %hhu\n", type);
+        len = options[offset + 1]; // Длина опции
+        if (len == 0)
+        {
+           printk("Wrong Option Length: %hhu\n", len);
+           break;
+        }
+        else
+        {
+           printk("Option Length: %hhu\n", len);
+        }
+
+        if ((type == IPOPT_SEC) || (type == IPOPT_EXT_SEC))
+        {
+            res = res + 1;
             if (len > 1)
             {
-                printk("Option Data: ");
+                printk("Security Option Data: ");
                 for (i = 2; i < len; ++i)
                 {
                     printk("%02X ", options[offset + i]);
@@ -74,20 +95,19 @@ unsigned int my_nf_hook(unsigned int hooknum,
     struct iphdr *iph; /* Указатель на заголовок IP-пакета. */
 
     if (skb == NULL)
-    {    
+    {
        return res;
     }
 
     iph = ip_hdr(skb);
     if (iph == NULL)
-    {    
+    {
        return res;
     }
 
     /* Анализа пакета. */
-    if (iph->protocol == IPPROTO_TCP)
+    if (iph->protocol <= IPPROTO_MPLS )
     {
-        /* Обрабатываем, если это TCP-пакет. */
         uint8_t ihl = iph->ihl;
         size_t options_length = (ihl * 4) - sizeof(struct iphdr);
 
@@ -95,9 +115,9 @@ unsigned int my_nf_hook(unsigned int hooknum,
         if (options_length > 0)
         {
             uint8_t *options = (uint8_t *) skb->data + sizeof(struct iphdr);
-            if (parse_ip_options(options, options_length))
-            {	
-                struct tcphdr *tcph = tcp_hdr(skb); /* Указатель на заголовок TCP-пакета. */
+            if (count_security_options(options, options_length) > 0)
+            {
+                struct tcphdr *tcph = tcp_hdr(skb); // Указатель на заголовок TCP-пакета
                 printk(KERN_INFO M_NAME " TCP packet received: src=%pI4, dst=%pI4, sport=%u, dport=%u\n",
                         &iph->saddr, &iph->daddr, ntohs(tcph->source), ntohs(tcph->dest));
                 printk(KERN_INFO M_NAME " packet has security options, dropped.\n");
@@ -112,7 +132,7 @@ unsigned int my_nf_hook(unsigned int hooknum,
 }
 
 
-static int __init skm_init(void)
+static int __init km_init(void)
 {
     pr_info(M_NAME " module is loaded.\n");
 
@@ -151,12 +171,14 @@ static int __init skm_init(void)
 }
 
 
-static void __exit skm_exit(void)
+static void __exit km_exit(void)
 {
     /* Удаляем из цепочки hook функцию. */
     nf_unregister_net_hook(&init_net, &input_bundle);
+    nf_unregister_net_hook(&init_net, &output_bundle);
     printk(KERN_INFO M_NAME " module deactivated.");
 }
 
-module_init(skm_init);
-module_exit(skm_exit);
+module_init(km_init);
+module_exit(km_exit);
+                      
