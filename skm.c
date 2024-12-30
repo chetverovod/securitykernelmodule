@@ -12,7 +12,6 @@
 /* Type of Extended Security Option */
 #define IPOPT_EXT_SEC   (5 |IPOPT_CONTROL|IPOPT_COPY)
 
-
 #define M_NAME "Security filter"
 
 MODULE_LICENSE("GPL");
@@ -20,13 +19,11 @@ MODULE_AUTHOR("Plastov Igor");
 MODULE_DESCRIPTION(M_NAME);
 MODULE_VERSION("0.01");
 
-
 /* Структура для регистрации функции перехвата входящих IP-пакетов. */
 struct nf_hook_ops input_bundle;
 
 /* Структура для регистрации функции перехвата исходящих IP-пакетов. */
 struct nf_hook_ops output_bundle;
-
 
 int count_security_options(uint8_t *options, size_t length)
 {
@@ -82,7 +79,6 @@ int count_security_options(uint8_t *options, size_t length)
     return res;
 }
 
-
 unsigned int my_nf_hook(unsigned int hooknum,
         struct sk_buff *skb,
         const struct net_device *in,
@@ -131,7 +127,6 @@ unsigned int my_nf_hook(unsigned int hooknum,
     return res;
 }
 
-
 static int __init km_init(void)
 {
     pr_info(M_NAME " module is loaded.\n");
@@ -170,7 +165,6 @@ static int __init km_init(void)
     return 0;
 }
 
-
 static void __exit km_exit(void)
 {
     /* Удаляем из цепочки hook функцию. */
@@ -181,4 +175,3 @@ static void __exit km_exit(void)
 
 module_init(km_init);
 module_exit(km_exit);
-                      
